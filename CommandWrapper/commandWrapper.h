@@ -10,6 +10,19 @@
 // Định nghĩa alias cho hàm lệnh
 using CommandFunction = std::function<void(const std::vector<std::string>&)>;
 
+namespace ProcessManager {
+    void listProcesses();
+    void killProcess(const std::vector<std::string>& args);
+    void stopProcess(const std::vector<std::string>& args);
+    void resumeProcess(const std::vector<std::string>& args);
+}
+
+namespace EnvironmentManager {
+    void showPath();
+    void addPath(const std::vector<std::string>& args);
+}
+
+
 class CommandWrapper {
 private:
     static std::unordered_map<std::string, CommandFunction> internalCommands;

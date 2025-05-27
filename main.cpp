@@ -1,10 +1,11 @@
-// main.cpp (Refactored)
+// main.cpp (Fixed with History Integration)
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <csignal>
 #include "CommandWrapper/commandWrapper.h"
+#include "Features/historyManager.h"
 
 // Tokenize input string into arguments
 std::vector<std::string> tokenize(const std::string& input) {
@@ -27,7 +28,8 @@ void executeExternalCommand(const std::vector<std::string>& args, bool isBackgro
 // Optional: Handle Ctrl+C
 void handleSigInt(int sig) {
     std::cout << "\n[Signal] Interrupt received (Ctrl+C)\n";
-    // Optionally restore prompt or clean up
+    std::cout << "tiny_shell> ";
+    std::cout.flush();
 }
 
 int main() {
@@ -35,13 +37,31 @@ int main() {
     CommandWrapper::initializeCommands();
 
     std::string input;
+    std::cout << "Welcome to tiny_shell! Type 'help' for available commands.\n";
+    
     while (true) {
         std::cout << "tiny_shell> ";
         std::getline(std::cin, input);
+        
+        // Handle EOF (Ctrl+D)
+        if (std::cin.eof()) {
+            std::cout << "\nGoodbye!\n";
+            break;
+        }
+        
         if (input.empty()) continue;
+
+        // Add command to history BEFORE processing
+        HistoryManager::addCommand(input);
 
         std::vector<std::string> args = tokenize(input);
         if (args.empty()) continue;
+
+        // Handle exit command specially
+        if (args[0] == "exit" || args[0] == "quit") {
+            std::cout << "Goodbye!\n";
+            break;
+        }
 
         bool isBackground = false;
         if (!args.empty() && args.back() == "&") {
