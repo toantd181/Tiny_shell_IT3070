@@ -1,23 +1,26 @@
 CXX = g++
-CXXFLAGS = -std=c++17
+CXXFLAGS = -std=c++17 -Wall -I.
 
-# Tên chương trình cuối cùng
+# Target executable
 TARGET = tiny_shell
 
-# Các tệp nguồn thực tế (bỏ qua các tệp .h)
-SRC = main.cpp Processes/taixiu.cpp Processes/primeCounter.cpp
+# Source files
+SRC = main.cpp CommandWrapper/commandWrapper.cpp Builtin/builtins.cpp Processes/taixiu.cpp Processes/primeCounter.cpp
 
-# Các tệp đối tượng
+
+# Object files
 OBJ = $(SRC:.cpp=.o)
 
-# Quy tắc chính để tạo chương trình
+# Main rule
 $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) -o $(TARGET)
 
-# Quy tắc để tạo đối tượng .o từ .cpp
+# Rule for object files
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Quy tắc làm sạch
+# Clean rule
 clean:
 	rm -f $(OBJ) $(TARGET)
+
+.PHONY: clean

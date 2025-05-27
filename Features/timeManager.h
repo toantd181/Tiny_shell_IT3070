@@ -11,7 +11,7 @@ class TimeManager {
 public:
     static void sleepShell(const std::vector<std::string>& args) {
         if (args.empty()) {
-            std::cerr << "Usage: sleep <seconds>\n";
+            std::cerr << "Usage: sliip <seconds>\n";
             return;
         }
 
