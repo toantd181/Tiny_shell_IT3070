@@ -13,9 +13,7 @@ namespace fs = std::filesystem;
 class FileManager {
     public:
         static const unordered_set<string> supportedCommands;
-        static const unordered_set<string>& getSupportedCommands() {
-            return supportedCommands;
-        }
+        static const unordered_set<string>& getSupportedCommands();
 
         void createFile (const vector<string>& args){
             if (args.size() != 1){
@@ -126,12 +124,5 @@ class FileManager {
             }
 };
 
-    const unordered_set<string> FileManager::supportedCommands = {
-    "create_file",
-    "delete_file",
-    "copy_file",
-    "move_file",
-    "list_files"
-};
 
 #endif // FILE_MANAGER_H

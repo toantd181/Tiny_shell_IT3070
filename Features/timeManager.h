@@ -5,7 +5,8 @@
 #include <thread>
 #include <iostream>
 #include <ctime>
-#include<vector>
+#include <vector>
+#include "processManager.h"
 
 class TimeManager {
 public:

@@ -1,21 +1,41 @@
+// builtins.cpp
 #include "builtins.h"
-#include "../CommandWrapper/commandWrapper.h" // Nếu cần dùng CommandWrapper::getInternalCommands()
 #include <iostream>
 #include <cstdlib>
+#include <ctime>
 
-using namespace std;
+std::unordered_map<std::string, Builtins::BuiltinFunction> Builtins::builtinCommands;
 
-void Builtins::helpCommand(const vector<string>& args) {
-    cout << "Available internal commands:" << endl;
-    auto commands = CommandWrapper::getInternalCommands();
-    for (const auto& cmd : commands) {
-        cout << "  " << cmd << endl;
-    }
-    cout << "\nUse '&' at the end of any command to run it in background" << endl;
-    cout << "Example: sliip 10 &" << endl;
+void Builtins::initialize() {
+    builtinCommands["help"] = helpCommand;
+    builtinCommands["exit"] = exitCommand;
+    builtinCommands["quit"] = exitCommand; // alias
+    
 }
 
-void Builtins::exitCommand(const vector<string>& args) {
-    cout << "Shell exited. Goodbye!" << endl;
-    exit(0); // Gọi exit trực tiếp thay vì return về main
+bool Builtins::isBuiltin(const std::string& cmd) {
+    return builtinCommands.find(cmd) != builtinCommands.end();
+}
+
+bool Builtins::execute(const std::vector<std::string>& args) {
+    if (args.empty()) return false;
+    auto it = builtinCommands.find(args[0]);
+    if (it != builtinCommands.end()) {
+        it->second(args);  // Gọi lệnh nội bộ
+        return true;
+    }
+    return false;
+}
+
+void Builtins::helpCommand(const std::vector<std::string>&) {
+    std::cout << "Available built-in commands:\n";
+    for (const auto& cmd : builtinCommands) {
+        std::cout << "  " << cmd.first << "\n";
+    }
+    std::cout << "\nUse '&' at the end of a command to run it in the background.\n";
+}
+
+void Builtins::exitCommand(const std::vector<std::string>&) {
+    std::cout << "Shell exited. Goodbye!\n";
+    std::exit(0);
 }

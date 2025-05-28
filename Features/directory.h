@@ -12,11 +12,7 @@
     {
     public:
         static const std::unordered_set<std::string> supportedCommands;
-
-        static const std::unordered_set<std::string>& getSupporedCommands()
-        {
-            return supportedCommands;
-        }
+        static const std::unordered_set<std::string>& getSupportedCommands();
 
         void copyDirectory(const std::vector<std::string> &args)
         {
@@ -131,34 +127,42 @@
         }
 
         void changeDirectory(const std::vector<std::string>& args) {
-            if (args.size() != 1) {
-                printUsage("change_dir <directory>");
-                return;
-            }
+    if (args.size() != 1) {
+        printUsage("change_dir <directory>");
+        return;
+    }
 
-            std::string dirArg = args[0];
-            fs::path newDir;
+    namespace fs = std::filesystem;
+    fs::path target = args[0];
+    fs::path newDir;
 
-            if (dirArg == "..") {
-                newDir = fs::current_path().parent_path(); // lùi về thư mục cha
-            } else if (dirArg == ".") {
-                newDir = fs::current_path(); // giữ nguyên thư mục hiện tại
-            } else {
-                newDir = fs::absolute(dirArg); // chuyển đổi đường dẫn tương đối thành tuyệt đối
-            }
+    if (target.is_absolute()) {
+        // If they gave an absolute path, use it
+        newDir = target;
+    } else {
+        // Otherwise, resolve relative to cwd
+        newDir = fs::current_path() / target;
+    }
 
-            try {
-                if (!fs::exists(newDir) || !fs::is_directory(newDir)) {
-                    std::cerr << "Target directory does not exist or is not a directory: " << newDir << std::endl;
-                    return;
-                }
+    // Clean up any "../" or "./" in the middle
+    newDir = newDir.lexically_normal();
 
-                fs::current_path(newDir);
-                std::cout << "Changed current directory to: " << fs::current_path() << std::endl;
-            } catch (const fs::filesystem_error& e) {
-                std::cerr << "Error changing directory: " << e.what() << std::endl;
-            }
-        }
+    // Now check it
+    if (!fs::exists(newDir) || !fs::is_directory(newDir)) {
+        std::cerr << "Target directory does not exist or is not a directory: "
+                  << newDir << "\n";
+        return;
+    }
+
+    // Finally, perform the switch
+    try {
+        fs::current_path(newDir);
+        std::cout << "Changed current directory to: "
+                  << fs::current_path() << "\n";
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Error changing directory: " << e.what() << "\n";
+    }
+}
 
         private:
             static void printUsage(const std::string &usage)
@@ -186,15 +190,6 @@
                     std::cerr << "Error listing directory: " << e.what() << std::endl;
                 }
             }
-        };
-
-        const std::unordered_set<std::string> DirectoryManager::supportedCommands = {
-            "copy",
-            "make_dir",
-            "delete_dir",
-            "list_dir_tree",
-            "move_dir",
-            "change_dir"
         };
 
     #endif

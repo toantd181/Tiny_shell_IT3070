@@ -1,82 +1,108 @@
-// main.cpp (Fixed with History Integration)
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <csignal>
+#include <filesystem>
 #include "CommandWrapper/commandWrapper.h"
 #include "Features/historyManager.h"
+#include "Builtin/builtins.h"
+#include "Features/features.h"
 
 // Tokenize input string into arguments
 std::vector<std::string> tokenize(const std::string& input) {
-    std::istringstream stream(input);
     std::vector<std::string> tokens;
-    std::string token;
-    while (stream >> token) {
-        tokens.push_back(token);
+    std::string cur;
+    bool inDouble = false, inSingle = false;
+
+    for (size_t i = 0; i < input.size(); ++i) {
+        char c = input[i];
+        if (inDouble) {
+            if (c == '"') {
+                inDouble = false;
+            } else if (c == '\\' && i + 1 < input.size()) {
+                // handle simple escapes inside double quotes
+                cur += input[++i];
+            } else {
+                cur += c;
+            }
+        }
+        else if (inSingle) {
+            if (c == '\'') {
+                inSingle = false;
+            } else {
+                cur += c;
+            }
+        }
+        else {
+            if (std::isspace(c)) {
+                if (!cur.empty()) {
+                    tokens.push_back(cur);
+                    cur.clear();
+                }
+            }
+            else if (c == '"') {
+                inDouble = true;
+            }
+            else if (c == '\'') {
+                inSingle = true;
+            }
+            else {
+                cur += c;
+            }
+        }
     }
+    if (!cur.empty()) {
+        tokens.push_back(cur);
+    }
+
     return tokens;
 }
 
-// Placeholder: execute external command (you can implement later)
+
 void executeExternalCommand(const std::vector<std::string>& args, bool isBackground) {
     std::cerr << "[External Command] Not implemented: ";
     for (const auto& arg : args) std::cerr << arg << ' ';
     std::cerr << std::endl;
 }
 
-// Optional: Handle Ctrl+C
-void handleSigInt(int sig) {
+void handleSigInt(int) {
     std::cout << "\n[Signal] Interrupt received (Ctrl+C)\n";
     std::cout << "tiny_shell> ";
     std::cout.flush();
 }
 
 int main() {
-    std::signal(SIGINT, handleSigInt); // Handle Ctrl+C
-    CommandWrapper::initializeCommands();
+    std::signal(SIGINT, handleSigInt);
+
+    Builtins::initialize();         // 1) help, exit, date, quit…
+    CommandWrapper::initialize();   // 2) clear any old registrations
+    registerAllFeatures();          // 3) file/dir/prime/ps/kill/…, env, run_s…
+
+    // Store the initial working directory as root
+    std::filesystem::path root_dir = std::filesystem::current_path();
 
     std::string input;
-    std::cout << "Welcome to tiny_shell! Type 'help' for available commands.\n";
-    
     while (true) {
-        std::cout << "tiny_shell> ";
-        std::getline(std::cin, input);
-        
-        // Handle EOF (Ctrl+D)
-        if (std::cin.eof()) {
-            std::cout << "\nGoodbye!\n";
-            break;
-        }
-        
-        if (input.empty()) continue;
+        // Get current working directory and show relative path from root
+        std::filesystem::path cwd = std::filesystem::current_path();
+        std::filesystem::path relative_path = std::filesystem::relative(cwd, root_dir);
+        std::cout << relative_path.string() << " tiny_shell> ";
+        if (!std::getline(std::cin, input)) break;  // EOF or error
 
-        // Add command to history BEFORE processing
+        if (input.empty()) continue;
         HistoryManager::addCommand(input);
 
-        std::vector<std::string> args = tokenize(input);
-        if (args.empty()) continue;
+        auto args = tokenize(input);
+        bool isBg = (!args.empty() && args.back() == "&");
+        if (isBg) args.pop_back();
 
-        // Handle exit command specially
-        if (args[0] == "exit" || args[0] == "quit") {
-            std::cout << "Goodbye!\n";
-            break;
-        }
+        if (Builtins::execute(args))                   continue;
+        if (CommandWrapper::executeCommand(args, isBg)) continue;
 
-        bool isBackground = false;
-        if (!args.empty() && args.back() == "&") {
-            isBackground = true;
-            args.pop_back();
-        }
-
-        // Try internal command first
-        if (CommandWrapper::executeCommand(args, isBackground)) {
-            continue;
-        }
-
-        // Fallback to external command
-        executeExternalCommand(args, isBackground);
+        std::cerr << "Unknown command: " << args[0] << "\n";
     }
 
+    std::cout << "Goodbye!\n";
     return 0;
 }

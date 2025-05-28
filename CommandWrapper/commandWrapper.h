@@ -1,39 +1,23 @@
-// CommandWrapper.h
-#ifndef COMMANDWRAPPER_H
-#define COMMANDWRAPPER_H
-
+#pragma once
 #include <string>
-#include <unordered_map>
 #include <vector>
 #include <functional>
 
-// Định nghĩa alias cho hàm lệnh
-using CommandFunction = std::function<void(const std::vector<std::string>&)>;
+namespace CommandWrapper {
 
-namespace ProcessManager {
-    void listProcesses();
-    void killProcess(const std::vector<std::string>& args);
-    void stopProcess(const std::vector<std::string>& args);
-    void resumeProcess(const std::vector<std::string>& args);
+    // Kiểu của hàm xử lý một lệnh: chỉ nhận vector<string> (đã split) và không trả về gì
+    using CommandFunction = std::function<void(const std::vector<std::string>&)>;
+
+    // Khởi tạo (xóa map cũ nếu có)
+    void initialize();
+
+    // Đăng ký một lệnh nội bộ
+    void registerCommand(const std::string& name, CommandFunction cmd);
+
+    // Thực thi lệnh đã split; nếu isBackground=true, chạy trong thread tách biệt
+    // Trả về true nếu là lệnh nội bộ, false nếu không tìm thấy (sẽ báo lỗi ngoài)
+    bool executeCommand(const std::vector<std::string>& args, bool isBackground);
+
+    // Lấy danh sách các lệnh đã đăng ký (ví dụ dùng cho help)
+    std::vector<std::string> listCommands();
 }
-
-namespace EnvironmentManager {
-    void showPath();
-    void addPath(const std::vector<std::string>& args);
-}
-
-
-class CommandWrapper {
-private:
-    static std::unordered_map<std::string, CommandFunction> internalCommands;
-
-public:
-    static void initializeCommands();
-    static bool executeCommand(const std::vector<std::string>& args, bool isBackground);
-    static bool isInternalCommand(const std::string& command);
-    static std::vector<std::string> getInternalCommands();
-    static void addCommand(const std::string& name, CommandFunction function);
-    static void removeCommand(const std::string& name);
-};
-
-#endif // COMMANDWRAPPER_H

@@ -1,3 +1,6 @@
+#ifndef SYSTEM_INFO_MANAGER_H
+#define SYSTEM_INFO_MANAGER_H 
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -57,3 +60,5 @@ private:
         }
     }
 };
+
+#endif // SYSTEM_INFO_MANAGER_H
