@@ -1,16 +1,28 @@
+// main.cpp
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <csignal>
 #include <filesystem>
+
+#include "Builtin/builtins.h"
 #include "CommandWrapper/commandWrapper.h"
 #include "Features/historyManager.h"
-#include "Builtin/builtins.h"
-#include "Features/features.h"
+#include "Features/features.h"    // registerAllFeatures()
+#include "Features/shellPath.h"   // your in-memory PATH
 
-// Tokenize input string into arguments
-std::vector<std::string> tokenize(const std::string& input) {
+namespace fs = std::filesystem;
+
+// Re-print prompt on Ctrl+C
+static void handleSigInt(int) {
+    std::cout << "\n\ntiny_shell> ";
+    std::cout.flush();
+}
+
+// Split input into tokens, supporting single & double quotes
+static std::vector<std::string> tokenize(const std::string& input) {
     std::vector<std::string> tokens;
     std::string cur;
     bool inDouble = false, inSingle = false;
@@ -18,91 +30,78 @@ std::vector<std::string> tokenize(const std::string& input) {
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
         if (inDouble) {
-            if (c == '"') {
-                inDouble = false;
-            } else if (c == '\\' && i + 1 < input.size()) {
-                // handle simple escapes inside double quotes
-                cur += input[++i];
-            } else {
-                cur += c;
-            }
+            if (c == '"')        inDouble = false;
+            else if (c == '\\' && i+1 < input.size()) cur += input[++i];
+            else cur += c;
         }
         else if (inSingle) {
-            if (c == '\'') {
-                inSingle = false;
-            } else {
-                cur += c;
-            }
+            if (c == '\'')       inSingle = false;
+            else cur += c;
         }
         else {
-            if (std::isspace(c)) {
+            if (std::isspace(static_cast<unsigned char>(c))) {
                 if (!cur.empty()) {
-                    tokens.push_back(cur);
+                    tokens.emplace_back(std::move(cur));
                     cur.clear();
                 }
             }
-            else if (c == '"') {
-                inDouble = true;
-            }
-            else if (c == '\'') {
-                inSingle = true;
-            }
-            else {
-                cur += c;
-            }
+            else if (c == '"')  inDouble = true;
+            else if (c == '\'') inSingle = true;
+            else cur += c;
         }
     }
-    if (!cur.empty()) {
-        tokens.push_back(cur);
-    }
-
+    if (!cur.empty()) tokens.emplace_back(std::move(cur));
     return tokens;
 }
 
-
-void executeExternalCommand(const std::vector<std::string>& args, bool isBackground) {
-    std::cerr << "[External Command] Not implemented: ";
-    for (const auto& arg : args) std::cerr << arg << ' ';
-    std::cerr << std::endl;
-}
-
-void handleSigInt(int) {
-    std::cout << "\n[Signal] Interrupt received (Ctrl+C)\n";
-    std::cout << "tiny_shell> ";
-    std::cout.flush();
-}
-
 int main() {
+    // 1) Ctrl+C handler
     std::signal(SIGINT, handleSigInt);
 
-    Builtins::initialize();         // 1) help, exit, date, quit…
-    CommandWrapper::initialize();   // 2) clear any old registrations
-    registerAllFeatures();          // 3) file/dir/prime/ps/kill/…, env, run_s…
+    // 2) Initialize shell subsystems
+    Builtins::initialize();           // help, exit, date, quit…
+    CommandWrapper::initialize();     // clear previous registrations
+    registerAllFeatures();            // wire up file/dir/prime/ps/kill/etc
+    // (registerAllFeatures also seeds ShellPath::initialize)
 
-    // Store the initial working directory as root
-    std::filesystem::path root_dir = std::filesystem::current_path();
+    // Remember the directory we started in
+    const fs::path root = fs::current_path();
 
-    std::string input;
+    std::string line;
     while (true) {
-        // Get current working directory and show relative path from root
-        std::filesystem::path cwd = std::filesystem::current_path();
-        std::filesystem::path relative_path = std::filesystem::relative(cwd, root_dir);
-        std::cout << relative_path.string() << " tiny_shell> ";
-        if (!std::getline(std::cin, input)) break;  // EOF or error
+        // Compute relative prompt path
+        fs::path cwd = fs::current_path();
+        fs::path rel = fs::relative(cwd, root);
+        std::cout << (rel.empty() ? "." : rel.string()) << " tiny_shell> ";
 
-        if (input.empty()) continue;
-        HistoryManager::addCommand(input);
+        if (!std::getline(std::cin, line)) {
+            // EOF (Ctrl+D) or error
+            std::cout << "\nGoodbye!\n";
+            break;
+        }
+        if (line.empty()) continue;
 
-        auto args = tokenize(input);
-        bool isBg = (!args.empty() && args.back() == "&");
-        if (isBg) args.pop_back();
+        // 3) Save to history
+        HistoryManager::addCommand(line);
 
-        if (Builtins::execute(args))                   continue;
+        // 4) Tokenize & detect background (&)
+        auto args = tokenize(line);
+        bool isBg = false;
+        if (!args.empty() && args.back() == "&") {
+            isBg = true;
+            args.pop_back();
+        }
+        if (args.empty()) continue;
+
+        // 5) Built-ins (help, exit, etc)
+        if (Builtins::execute(args)) continue;
+
+        // 6) Everything else via CommandWrapper
         if (CommandWrapper::executeCommand(args, isBg)) continue;
 
+        // 7) Unknown
         std::cerr << "Unknown command: " << args[0] << "\n";
     }
 
-    std::cout << "Goodbye!\n";
     return 0;
 }
