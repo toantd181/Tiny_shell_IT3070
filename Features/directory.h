@@ -127,42 +127,42 @@
         }
 
         void changeDirectory(const std::vector<std::string>& args) {
-    if (args.size() != 1) {
-        printUsage("change_dir <directory>");
-        return;
-    }
+            if (args.size() != 1) {
+                printUsage("change_dir <directory>");
+                return;
+            }
 
-    namespace fs = std::filesystem;
-    fs::path target = args[0];
-    fs::path newDir;
+            namespace fs = std::filesystem;
+            fs::path target = args[0];
+            fs::path newDir;
 
-    if (target.is_absolute()) {
-        // If they gave an absolute path, use it
-        newDir = target;
-    } else {
-        // Otherwise, resolve relative to cwd
-        newDir = fs::current_path() / target;
-    }
+            if (target.is_absolute()) {
+                // If they gave an absolute path, use it
+                newDir = target;
+            } else {
+                // For relative paths, resolve from current directory
+                newDir = fs::current_path() / target;
+            }
 
-    // Clean up any "../" or "./" in the middle
-    newDir = newDir.lexically_normal();
+            // Clean up any "../" or "./" in the middle
+            newDir = newDir.lexically_normal();
 
-    // Now check it
-    if (!fs::exists(newDir) || !fs::is_directory(newDir)) {
-        std::cerr << "Target directory does not exist or is not a directory: "
-                  << newDir << "\n";
-        return;
-    }
+            // Now check it
+            if (!fs::exists(newDir) || !fs::is_directory(newDir)) {
+                std::cerr << "Target directory does not exist or is not a directory: "
+                          << newDir << "\n";
+                return;
+            }
 
-    // Finally, perform the switch
-    try {
-        fs::current_path(newDir);
-        std::cout << "Changed current directory to: "
-                  << fs::current_path() << "\n";
-    } catch (const fs::filesystem_error& e) {
-        std::cerr << "Error changing directory: " << e.what() << "\n";
-    }
-}
+            // Finally, perform the switch
+            try {
+                fs::current_path(newDir);
+                std::cout << "Changed current directory to: "
+                          << fs::current_path() << "\n";
+            } catch (const fs::filesystem_error& e) {
+                std::cerr << "Error changing directory: " << e.what() << "\n";
+            }
+        }
 
         private:
             static void printUsage(const std::string &usage)

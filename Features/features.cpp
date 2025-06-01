@@ -116,6 +116,7 @@ void registerAllFeatures() {
 
     // History & Time
     registerCommand("history", [&](auto&){ HistoryManager::showHistory(); });
+    registerCommand("clear_history", [&](auto&){ HistoryManager::clearHistory(); });
     registerCommand("sliip",   [&](auto& a){ TimeManager::sleepShell(a);    });
     registerCommand("date",    [&](auto&){ TimeManager::printDateTime();  });
 

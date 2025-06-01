@@ -61,7 +61,6 @@ bool executeCommand(const std::vector<std::string>& args, bool isBackground) {
         full = ShellPath::findExecutable(cmd);
     }
     if (full.empty()) {
-        std::cerr << "Unknown command: " << cmd << "\n";
         return false;
     }
 
