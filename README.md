@@ -6,8 +6,8 @@ Một shell đơn giản chạy trên Linux, hỗ trợ:
 - Quản lý tiến trình nền (jobs): `ps`, `kill`, `stop`, `resume`.
 - Các lệnh nội bộ (built-in): `help`, `exit`/`quit`, `date`, `history`, `clear_history`.
 - Tương tác với hệ thống file/thư mục: `create_file`, `delete_file`, `copy_file`, `move_file`, `list_files`, `create_dir`, `delete_dir`, `list_dir_tree`, `move_dir`, `change_dir`.
-- Hiển thị thông tin hệ thống (`sysinfo`), sleep (`sliip`), chạy file Assembly (`run_s <tệp.s>`), batch cơ bản (`run_bat <tệp.bat>`).
-- ShellPath riêng (các thư mục tìm kiếm nhị phân do người dùng thêm).
+- Hiển thị thông tin hệ thống (`sysinfo`), sleep (`sliip`), chạy file Assembly (`run_s <tệp.s>`).
+- ShellPath riêng (các thư mục do người dùng thêm).
 
 ---
 
