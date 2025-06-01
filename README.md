@@ -27,12 +27,15 @@ Một shell đơn giản chạy trên Linux, hỗ trợ:
    cd Tiny_shell_IT3070
    ```
 2. Biên dịch bằng make:
-   ``` make
+   ``` bash
+   make
    ```
    Kết quả sẽ sinh ra file thực thi `tiny_shell` trong thư mục gốc dự án
 3. Chạy shell:
-   ```./tiny_shell
+   ``` bash
+   ./tiny_shell
    ```
    Giao diện prompt sẽ hiển thị:
-   ```tiny_shell>
+   ```
+   tiny_shell>
    ``` 
