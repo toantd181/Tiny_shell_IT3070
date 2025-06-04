@@ -1,5 +1,5 @@
 // Features/features.cpp
-
+#include "scriptRunner.h"
 #include "features.h"
 #include "../CommandWrapper/commandWrapper.h"
 #include "file.h"
@@ -124,6 +124,9 @@ void registerAllFeatures() {
     registerCommand("write_to_screen", [&](auto& a){ ScreenManager::writeToScreen(a); });
     registerCommand("read_file",       [&](auto& a){ ScreenManager::readFile(a);       });
     registerCommand("clear_screen",    [&](auto&){    ScreenManager::clearTerminal(); });
+
+    // Script runner
+    registerCommand("run_sh", [&](auto& a){ ScriptRunner::run_sh(a); });
 
     // **ShellPath**-based PATH management
     registerCommand("path", [&](auto&){

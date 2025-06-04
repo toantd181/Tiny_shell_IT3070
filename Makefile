@@ -5,7 +5,7 @@ CXXFLAGS = -std=c++17 -Wall -I.
 TARGET = tiny_shell
 
 # Source files
-SRC = main.cpp CommandWrapper/commandWrapper.cpp Builtin/builtins.cpp Processes/taixiu.cpp Processes/primeCounter.cpp Features/features.cpp Features/processManager.cpp Features/clearScreen.cpp Features/directory.cpp Features/file.cpp Features/screenManager.cpp Features/shellPath.cpp
+SRC = main.cpp CommandWrapper/commandWrapper.cpp Builtin/builtins.cpp Processes/taixiu.cpp Processes/primeCounter.cpp Features/features.cpp Features/processManager.cpp Features/clearScreen.cpp Features/directory.cpp Features/file.cpp Features/screenManager.cpp Features/shellPath.cpp Features/scriptRunner.cpp
 
 
 # Object files
